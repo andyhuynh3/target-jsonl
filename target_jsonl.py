@@ -8,7 +8,8 @@ import sys
 from datetime import datetime
 
 import singer
-from jsonschema.validators import Draft4Validator
+from jsonschema import Draft4Validator, FormatChecker
+from decimal import Decimal
 
 logger = singer.get_logger()
 
@@ -19,6 +20,18 @@ def emit_state(state):
         logger.debug('Emitting state {}'.format(line))
         sys.stdout.write("{}\n".format(line))
         sys.stdout.flush()
+
+
+def float_to_decimal(value):
+    '''Walk the given data structure and turn all instances of float into
+    double.'''
+    if isinstance(value, float):
+        return Decimal(str(value))
+    if isinstance(value, list):
+        return [float_to_decimal(child) for child in value]
+    if isinstance(value, dict):
+        return {k: float_to_decimal(v) for k, v in value.items()}
+    return value
 
 
 def persist_messages(messages, destination_path, do_timestamp_file=True):
@@ -43,7 +56,7 @@ def persist_messages(messages, destination_path, do_timestamp_file=True):
                     "was encountered before a corresponding schema".format(o['stream'])
                 )
 
-            validators[o['stream']].validate(o['record'])
+            validators[o['stream']].validate(float_to_decimal(o['record']))
 
             filename = o['stream'] + timestamp_file_part + '.jsonl'
             filename = os.path.expanduser(os.path.join(destination_path, filename))
@@ -57,8 +70,8 @@ def persist_messages(messages, destination_path, do_timestamp_file=True):
             state = o['value']
         elif message_type == 'SCHEMA':
             stream = o['stream']
-            schemas[stream] = o['schema']
-            validators[stream] = Draft4Validator(o['schema'])
+            schemas[stream] = float_to_decimal(o['schema'])
+            validators[stream] = Draft4Validator(float_to_decimal(o['schema']))
             key_properties[stream] = o['key_properties']
         else:
             logger.warning("Unknown message type {} in message {}".format(o['type'], o))
