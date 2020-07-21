@@ -34,7 +34,7 @@ def float_to_decimal(value):
     return value
 
 
-def persist_messages(messages, destination_path, do_timestamp_file=True):
+def persist_messages(messages, destination_path, do_timestamp_file=True, file_create_mode = 'a'):
     state = None
     schemas = {}
     key_properties = {}
@@ -61,7 +61,7 @@ def persist_messages(messages, destination_path, do_timestamp_file=True):
             filename = o['stream'] + timestamp_file_part + '.jsonl'
             filename = os.path.expanduser(os.path.join(destination_path, filename))
 
-            with open(filename, 'a', encoding='utf-8') as json_file:
+            with open(filename, mode=file_create_mode, encoding='utf-8') as json_file:
                 json_file.write(json.dumps(o['record']) + '\n')
 
             state = None
@@ -91,7 +91,9 @@ def main():
         config = {}
 
     input_messages = io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8')
-    state = persist_messages(input_messages, config.get('destination_path', ''), config.get('do_timestamp_file', True))
+    file_create_mode = 'w' if config.get('override_file', False) else 'a'
+    state = persist_messages(input_messages, config.get('destination_path', ''), config.get('do_timestamp_file', True),
+        file_create_mode=file_create_mode)
 
     emit_state(state)
     logger.debug("Exiting normally")

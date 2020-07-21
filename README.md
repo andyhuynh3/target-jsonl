@@ -57,6 +57,8 @@ Here is a brief description of the optional config keys
 
 `do_timestamp_file` - specifies if the file should get timestamped. By default, the resulting file will have a timestamp in the file name (i.e. `exchange_rate-{timestamp}.jsonl` as described above in the `Run` section). If this option gets set to `false`, the resulting file will not have a timestamp associated with it (i.e. `exchange_rate.jsonl` in our example).
 
+`override_file` - override the file content when file exists (`true`), otherwise the new records will be appended if the file already exists
+
 ---
 
 Copyright &copy; 2020 Andy Huynh
