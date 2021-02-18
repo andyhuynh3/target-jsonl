@@ -55,6 +55,8 @@ Here is a brief description of the optional config keys
 
 `destination_path` - Specifies where to write the resulting `.jsonl` file to. By default, the file gets written in your working directory.
 
+`custom_name` - Specifies a custom name for the filename, instead of the stream name (i.e. `{custom_name}-{timestamp}.jsonl`, asumming `do_timestamp_file` is `true`). By default, the stream name will be used.
+
 `do_timestamp_file` - specifies if the file should get timestamped. By default, the resulting file will have a timestamp in the file name (i.e. `exchange_rate-{timestamp}.jsonl` as described above in the `Run` section). If this option gets set to `false`, the resulting file will not have a timestamp associated with it (i.e. `exchange_rate.jsonl` in our example).
 
 ---
