@@ -16,7 +16,7 @@ setup(
     keywords=["singer", "singer.io", "target", "etl"],
     classifiers=['Programming Language :: Python :: 3 :: Only'],
     py_modules=['target_jsonl'],
-    install_requires=['jsonschema==2.6.0', 'singer-python==2.1.4'],
+    install_requires=['jsonschema==2.6.0', 'singer-python==5.8.0', 'adjust-precision-for-schema==0.3.3'],
     entry_points='''
           [console_scripts]
           target-jsonl=target_jsonl:main
