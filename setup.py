@@ -6,7 +6,7 @@ with open("README.md", "r", encoding="utf-8") as f:
 
 setup(
     name='target-jsonl',
-    version='0.1.2',
+    version='0.1.3',
     description='Singer.io target for writing JSON Line files',
     long_description=readme,
     long_description_content_type='text/markdown',
