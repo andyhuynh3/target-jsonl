@@ -6,6 +6,7 @@ import simplejson as json
 import os
 import sys
 from datetime import datetime
+from pathlib import Path
 
 import singer
 from jsonschema import Draft4Validator, FormatChecker
@@ -53,6 +54,8 @@ def persist_messages(
             validators[o['stream']].validate((o['record']))
 
             filename = (custom_name or o['stream']) + timestamp_file_part + '.jsonl'
+            if destination_path:
+                Path(destination_path).mkdir(parents=True, exist_ok=True)
             filename = os.path.expanduser(os.path.join(destination_path, filename))
 
             with open(filename, 'a', encoding='utf-8') as json_file:
