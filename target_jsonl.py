@@ -23,7 +23,12 @@ def emit_state(state):
 
 
 
-def persist_messages(messages, destination_path, do_timestamp_file=True):
+def persist_messages(
+    messages,
+    destination_path,
+    custom_name=None,
+    do_timestamp_file=True
+):
     state = None
     schemas = {}
     key_properties = {}
@@ -47,7 +52,7 @@ def persist_messages(messages, destination_path, do_timestamp_file=True):
 
             validators[o['stream']].validate((o['record']))
 
-            filename = o['stream'] + timestamp_file_part + '.jsonl'
+            filename = (custom_name or o['stream']) + timestamp_file_part + '.jsonl'
             filename = os.path.expanduser(os.path.join(destination_path, filename))
 
             with open(filename, 'a', encoding='utf-8') as json_file:
@@ -81,7 +86,12 @@ def main():
         config = {}
 
     input_messages = io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8')
-    state = persist_messages(input_messages, config.get('destination_path', ''), config.get('do_timestamp_file', True))
+    state = persist_messages(
+        input_messages,
+        config.get('destination_path', ''),
+        config.get('custom_name', ''),
+        config.get('do_timestamp_file', True)
+    )
 
     emit_state(state)
     logger.debug("Exiting normally")
