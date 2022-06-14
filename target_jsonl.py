@@ -2,6 +2,7 @@
 
 import argparse
 import io
+import jsonschema
 import simplejson as json
 import os
 import sys
@@ -51,7 +52,11 @@ def persist_messages(
                     "was encountered before a corresponding schema".format(o['stream'])
                 )
 
-            validators[o['stream']].validate((o['record']))
+            try: 
+                validators[o['stream']].validate((o['record']))
+            except jsonschema.ValidationError as e:
+                logger.error(f"Failed parsing the json schema for stream: {o['stream']}.")
+                raise e
 
             filename = (custom_name or o['stream']) + timestamp_file_part + '.jsonl'
             if destination_path:
