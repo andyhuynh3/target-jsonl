@@ -1,5 +1,6 @@
 {
-    "destination_path": "",
-    "custom_name": "",
-    "do_timestamp_file": true
+  "destination_path": "",
+  "custom_name": "",
+  "do_timestamp_file": true,
+  "raw": false
 }

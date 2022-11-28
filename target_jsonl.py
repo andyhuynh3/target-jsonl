@@ -2,15 +2,14 @@
 
 import argparse
 import io
-import jsonschema
-import simplejson as json
 import os
 import sys
 from datetime import datetime
 from pathlib import Path
 
+import jsonschema
+import simplejson as json
 import singer
-from jsonschema import Draft4Validator, FormatChecker
 from adjust_precision_for_schema import adjust_decimal_precision_for_schema
 
 logger = singer.get_logger()
@@ -19,72 +18,85 @@ logger = singer.get_logger()
 def emit_state(state):
     if state is not None:
         line = json.dumps(state)
-        logger.debug('Emitting state {}'.format(line))
-        sys.stdout.write("{}\n".format(line))
+        logger.debug(f"Emitting state {line}")
+        sys.stdout.write(f"{line}\n")
         sys.stdout.flush()
 
 
+def create_stream_file_handler(destination_path, filename):
+    Path(destination_path).mkdir(parents=True, exist_ok=True)
+    filename = os.path.expanduser(os.path.join(destination_path, filename))
+    return open(filename, "a", encoding="utf-8")
+
 
 def persist_messages(
-    messages,
-    destination_path,
-    custom_name=None,
-    do_timestamp_file=True
+    messages, destination_path="./", custom_name=None, do_timestamp_file=True, raw=False
 ):
     state = None
     schemas = {}
     key_properties = {}
     validators = {}
+    stream_file_handles = {}
 
-    timestamp_file_part = '-' + datetime.now().strftime('%Y%m%dT%H%M%S') if do_timestamp_file else ''
+    timestamp_file_part = (
+        "-" + datetime.now().strftime("%Y%m%dT%H%M%S") if do_timestamp_file else ""
+    )
 
-    for message in messages:
-        try:
-            o = singer.parse_message(message).asdict()
-        except json.decoder.JSONDecodeError:
-            logger.error("Unable to parse:\n{}".format(message))
-            raise
-        message_type = o['type']
-        if message_type == 'RECORD':
-            if o['stream'] not in schemas:
-                raise Exception(
-                    "A record for stream {}"
-                    "was encountered before a corresponding schema".format(o['stream'])
+    try:
+        for message in messages:
+            try:
+                o = singer.parse_message(message).asdict()
+            except json.decoder.JSONDecodeError:
+                logger.error(f"Unable to parse:\n{message}")
+                raise
+
+            message_type = o["type"]
+            stream = o["stream"]
+            handler = stream_file_handles.get(stream)
+
+            if message_type == "RECORD":
+                if o["stream"] not in schemas:
+                    raise Exception(
+                        f"A record for stream {stream} was encountered before a corresponding schema"
+                    )
+
+                try:
+                    validators[o["stream"]].validate((o["record"]))
+                except jsonschema.ValidationError as e:
+                    logger.error(
+                        f"Failed parsing the json schema for stream: {stream}."
+                    )
+                    raise e
+
+                if not raw:
+                    handler.write(json.dumps(o["record"]) + "\n")
+
+                state = None
+            elif message_type == "STATE":
+                logger.debug(f'Setting state to {o["value"]}')
+                state = o["value"]
+            elif message_type == "SCHEMA":
+                schemas[stream] = o["schema"]
+                adjust_decimal_precision_for_schema(schemas[stream])
+                validators[stream] = jsonschema.Draft4Validator((o["schema"]))
+                key_properties[stream] = o["key_properties"]
+                filename = (custom_name or stream) + timestamp_file_part + ".jsonl"
+                stream_file_handles[stream] = create_stream_file_handler(
+                    destination_path=destination_path, filename=filename
                 )
-
-            try: 
-                validators[o['stream']].validate((o['record']))
-            except jsonschema.ValidationError as e:
-                logger.error(f"Failed parsing the json schema for stream: {o['stream']}.")
-                raise e
-
-            filename = (custom_name or o['stream']) + timestamp_file_part + '.jsonl'
-            if destination_path:
-                Path(destination_path).mkdir(parents=True, exist_ok=True)
-            filename = os.path.expanduser(os.path.join(destination_path, filename))
-
-            with open(filename, 'a', encoding='utf-8') as json_file:
-                json_file.write(json.dumps(o['record']) + '\n')
-
-            state = None
-        elif message_type == 'STATE':
-            logger.debug('Setting state to {}'.format(o['value']))
-            state = o['value']
-        elif message_type == 'SCHEMA':
-            stream = o['stream']
-            schemas[stream] = o['schema']
-            adjust_decimal_precision_for_schema(schemas[stream])
-            validators[stream] = Draft4Validator((o['schema']))
-            key_properties[stream] = o['key_properties']
-        else:
-            logger.warning("Unknown message type {} in message {}".format(o['type'], o))
-
+            else:
+                logger.warning(f"Unknown message type {message_type} in message {o}")
+            if raw:
+                handler.write(message + "\n")
+    finally:
+        for handler in stream_file_handles.values():
+            handler.close()
     return state
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--config', help='Config file')
+    parser.add_argument("-c", "--config", help="Config file")
     args = parser.parse_args()
 
     if args.config:
@@ -93,17 +105,18 @@ def main():
     else:
         config = {}
 
-    input_messages = io.TextIOWrapper(sys.stdin.buffer, encoding='utf-8')
+    input_messages = io.TextIOWrapper(sys.stdin.buffer, encoding="utf-8")
     state = persist_messages(
         input_messages,
-        config.get('destination_path', ''),
-        config.get('custom_name', ''),
-        config.get('do_timestamp_file', True)
+        config.get("destination_path", "./"),
+        config.get("custom_name"),
+        config.get("do_timestamp_file", True),
+        config.get("raw", False),
     )
 
     emit_state(state)
     logger.debug("Exiting normally")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
