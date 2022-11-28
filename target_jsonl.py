@@ -14,6 +14,9 @@ from adjust_precision_for_schema import adjust_decimal_precision_for_schema
 
 logger = singer.get_logger()
 
+parser = argparse.ArgumentParser()
+parser.add_argument("-c", "--config", help="Config file")
+
 
 def emit_state(state):
     if state is not None:
@@ -43,6 +46,12 @@ def persist_messages(
     )
 
     try:
+        if raw:
+            filename = (custom_name or "target_jsonl") + timestamp_file_part + ".jsonl"
+            stream_file_handles["raw"] = create_stream_file_handler(
+                destination_path=destination_path, filename=filename
+            )
+
         for message in messages:
             try:
                 o = singer.parse_message(message).asdict()
@@ -51,8 +60,8 @@ def persist_messages(
                 raise
 
             message_type = o["type"]
-            stream = o["stream"]
-            handler = stream_file_handles.get(stream)
+            if message_type in {"RECORD", "SCHEMA"}:
+                stream = o["stream"]
 
             if message_type == "RECORD":
                 if o["stream"] not in schemas:
@@ -69,35 +78,40 @@ def persist_messages(
                     raise e
 
                 if not raw:
+                    handler = stream_file_handles.get(stream)
                     handler.write(json.dumps(o["record"]) + "\n")
 
                 state = None
+
             elif message_type == "STATE":
                 logger.debug(f'Setting state to {o["value"]}')
                 state = o["value"]
+
             elif message_type == "SCHEMA":
                 schemas[stream] = o["schema"]
                 adjust_decimal_precision_for_schema(schemas[stream])
                 validators[stream] = jsonschema.Draft4Validator((o["schema"]))
                 key_properties[stream] = o["key_properties"]
-                filename = (custom_name or stream) + timestamp_file_part + ".jsonl"
-                stream_file_handles[stream] = create_stream_file_handler(
-                    destination_path=destination_path, filename=filename
-                )
+                if not raw:
+                    filename = (custom_name or stream) + timestamp_file_part + ".jsonl"
+                    stream_file_handles[stream] = create_stream_file_handler(
+                        destination_path=destination_path, filename=filename
+                    )
+
             else:
                 logger.warning(f"Unknown message type {message_type} in message {o}")
+
             if raw:
-                handler.write(message + "\n")
+                handler = stream_file_handles.get("raw")
+                handler.write(message)
     finally:
         for handler in stream_file_handles.values():
             handler.close()
     return state
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-c", "--config", help="Config file")
-    args = parser.parse_args()
+def main(args=None):
+    args = parser.parse_args(args)
 
     if args.config:
         with open(args.config) as input_json:

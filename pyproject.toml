@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "target-jsonl"
+version = "0.1.4"
+description = "A Singer target that writes data to JSONL (JSON Lines) files."
+authors = ["Andy Huynh <andy.huynh312@gmail.com>"]
+license = "AGPL-3.0"
+readme = "README.md"
+packages = [{include = "target_jsonl"}]
+
+[tool.poetry.dependencies]
+python = ">=3.8,<4.0"
+jsonschema = "2.6.0"
+singer-python = "5.8.0"
+adjust-precision-for-schema = "0.3.3"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.2.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
