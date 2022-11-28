@@ -8,7 +8,7 @@ A [Singer](https://singer.io) target that writes data to JSONL ([JSON Lines](htt
 
 ### Install
 
-We will use [`tap-exchangeratesapi`][Exchangeratesapi] to pull currency exchange rate data from a public data set as an example.
+We will use [`tap-exchangeratesapi`][exchangeratesapi] to pull currency exchange rate data from a public data set as an example.
 
 First, make sure Python 3 is installed on your system or follow these installation instructions for [Mac] or [Ubuntu].
 
@@ -57,16 +57,19 @@ Here is a brief description of the optional config keys
 
 `custom_name` - Specifies a custom name for the filename, instead of the stream name (i.e. `{custom_name}-{timestamp}.jsonl`, asumming `do_timestamp_file` is `true`). By default, the stream name will be used.
 
-`do_timestamp_file` - specifies if the file should get timestamped. By default, the resulting file will have a timestamp in the file name (i.e. `exchange_rate-{timestamp}.jsonl` as described above in the `Run` section). If this option gets set to `false`, the resulting file will not have a timestamp associated with it (i.e. `exchange_rate.jsonl` in our example).
+`do_timestamp_file` - Specifies if the file should get timestamped. By default, the resulting file will have a timestamp in the file name (i.e. `exchange_rate-{timestamp}.jsonl` as described above in the `Run` section). If this option gets set to `false`, the resulting file will not have a timestamp associated with it (i.e. `exchange_rate.jsonl` in our example).
+
+`raw` - Boolean flag to enable verbatim writing of Singer messages to output file. By default, only record values are written to output files. With `raw` enabled, all messages
+recieved by the tap are written to the output file (including `SCHEMA`, `STATE` and `RECORD`).
 
 ---
 
 Copyright &copy; 2020 Andy Huynh
 
-[Singer Tap]: https://singer.io
-[Braintree]: https://github.com/singer-io/tap-braintree
-[Freshdesk]: https://github.com/singer-io/tap-freshdesk
-[Hubspot]: https://github.com/singer-io/tap-hubspot
-[Exchangeratesapi]: https://github.com/singer-io/tap-exchangeratesapi
-[Mac]: http://docs.python-guide.org/en/latest/starting/install3/osx/
-[Ubuntu]: https://www.digitalocean.com/community/tutorials/how-to-install-python-3-and-set-up-a-local-programming-environment-on-ubuntu-16-04
+[singer tap]: https://singer.io
+[braintree]: https://github.com/singer-io/tap-braintree
+[freshdesk]: https://github.com/singer-io/tap-freshdesk
+[hubspot]: https://github.com/singer-io/tap-hubspot
+[exchangeratesapi]: https://github.com/singer-io/tap-exchangeratesapi
+[mac]: http://docs.python-guide.org/en/latest/starting/install3/osx/
+[ubuntu]: https://www.digitalocean.com/community/tutorials/how-to-install-python-3-and-set-up-a-local-programming-environment-on-ubuntu-16-04
