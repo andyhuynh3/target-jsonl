@@ -7,6 +7,7 @@ keywords=["singer", "singer.io", "target", "etl"]
 classifiers=["Programming Language :: Python :: 3 :: Only"]
 license = "AGPL-3.0"
 readme = "README.md"
+packages = [{ include = "target_jsonl.py" }]
 
 [tool.poetry.dependencies]
 python = ">=3.8,<4.0"
@@ -20,3 +21,6 @@ pytest = "^7.2.0"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+target-jsonl = 'target_jsonl:main'
