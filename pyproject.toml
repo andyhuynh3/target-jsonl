@@ -7,7 +7,6 @@ keywords=["singer", "singer.io", "target", "etl"]
 classifiers=["Programming Language :: Python :: 3 :: Only"]
 license = "AGPL-3.0"
 readme = "README.md"
-packages = [{include = "target_jsonl"}]
 
 [tool.poetry.dependencies]
 python = ">=3.8,<4.0"
