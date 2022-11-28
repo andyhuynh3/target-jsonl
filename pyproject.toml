@@ -3,6 +3,8 @@ name = "target-jsonl"
 version = "0.1.4"
 description = "A Singer target that writes data to JSONL (JSON Lines) files."
 authors = ["Andy Huynh <andy.huynh312@gmail.com>"]
+keywords=["singer", "singer.io", "target", "etl"],
+classifiers=["Programming Language :: Python :: 3 :: Only"],
 license = "AGPL-3.0"
 readme = "README.md"
 packages = [{include = "target_jsonl"}]
